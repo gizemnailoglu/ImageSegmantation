@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">WebServisImage</string>
+    <string name="button_one_text">Resmi Sıkıştır</string>
+    <string name="button_two">Segmentasyon Uygula</string>
+</resources>
