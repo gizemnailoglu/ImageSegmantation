@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -54,6 +56,7 @@ import com.squareup.picasso.Picasso;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +69,13 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFunctions mFunctions;;
     private StorageReference mStorageRef;
     private Uri selectedImage;
-    ImageView img;
-    ImageView resultImg;
+    ImageView img,resultImg;
     EditText editTextRate;
-    List<Bitmap> myBitmaps;
-    List<String> myNames;
+    TextView textObjectName;
+    List<Bitmap> myBitmaps = new ArrayList<>();
+    List<String> myNames= new ArrayList<>();;
+    int idBitmap=0;
+    ProgressDialog progressDialog ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,13 +90,19 @@ public class MainActivity extends AppCompatActivity {
         mFunctions = FirebaseFunctions.getInstance();
         mStorageRef = FirebaseStorage.getInstance().getReference();
         editTextRate=findViewById(R.id.edittext_rate);
+        textObjectName=findViewById(R.id.txt_obje_name);
+        progressDialog = new ProgressDialog(MainActivity.this);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Lütfen bekleyiniz..");
     }
 
     public void Compress(View view){
         if (selectedImage!=null){
             if (!TextUtils.isEmpty(editTextRate.getText())){
                 Toast.makeText(this, "Resim Sunucuda Compress edilicek", Toast.LENGTH_LONG).show();
-                final int x=100-((Integer.parseInt(editTextRate.getText().toString()))%100);
+                int x=100-((Integer.parseInt(editTextRate.getText().toString()))%100);
+                if (x>75)x=75;// sıkıştırma doğru çalışması için
+                progressDialog.show();
                 addFirebaseFile(selectedImage,1,x);
             }else Toast.makeText(this, "Sıkıştırma oranı gir", Toast.LENGTH_SHORT).show();
         }else Toast.makeText(this, "Bir resim seçilmedi", Toast.LENGTH_SHORT).show();
@@ -101,113 +112,23 @@ public class MainActivity extends AppCompatActivity {
     public void Segmantation(View view){
         if (selectedImage!=null){
           //  segma();
+             myBitmaps.clear();
+             myNames.clear();
+             idBitmap=0;
+             progressDialog.show();
              addFirebaseFile(selectedImage,2,0);
         }else Toast.makeText(this, "Bir resim seçilmedi", Toast.LENGTH_SHORT).show();
     }
 
-
-    // güncellenecek
-    private void segma() {
-          try {
-            final Bitmap bitmap;
-             if (Build.VERSION.SDK_INT >= 28) {
-                ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
-                bitmap = ImageDecoder.decodeBitmap(source);
-            } else {
-                bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
-            }
-            FirebaseVisionImage image =  FirebaseVisionImage.fromBitmap(bitmap);
-              FirebaseVisionObjectDetectorOptions options =
-                      new FirebaseVisionObjectDetectorOptions.Builder()
-                              .setDetectorMode(FirebaseVisionObjectDetectorOptions.SINGLE_IMAGE_MODE)
-                              //.enableMultipleObjects()
-                              .enableClassification()  // Optional
-                              .build();
-
-            FirebaseVisionObjectDetector objectDetector =
-                    FirebaseVision.getInstance().getOnDeviceObjectDetector(options);
-
-
-
-            objectDetector.processImage(image).addOnSuccessListener(new OnSuccessListener<List<FirebaseVisionObject>>() {
-                @Override
-                public void onSuccess(List<FirebaseVisionObject> firebaseVisionObjects) {
-                    resultImg.setBackgroundColor(Color.rgb(255,255,255));
-                    for (FirebaseVisionObject obj : firebaseVisionObjects) {
-                        Integer id = obj.getTrackingId();
-                        Rect bounds = obj.getBoundingBox();
-                        // If classification was enabled:
-
-                       int category = obj.getClassificationCategory();
-                        Float confidence = obj.getClassificationConfidence();
-                        System.out.println("beyter "+id+" "+bounds.left +" "+bounds.right+" "+bounds.bottom+" " +bounds.top);
-
-                        Bitmap newBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-
-                        Canvas canvas = new Canvas(newBitmap);
-                       // resultImg.draw(canvas);
-                        Paint p = new Paint();
-
-                        p.setColor(Color.rgb(0,255,0));
-                        p.setStyle(Paint.Style.STROKE);
-                    /*    Rect bound2 = new Rect() ;
-                        bound2.top=bounds.top+1;
-                        bound2.bottom=bounds.bottom+1;
-                        bound2.left=bounds.left+1;
-                        bound2.right=bounds.right+1;
-                        Rect bound3 = new Rect() ;
-                        bound3.top=bounds.top+2;
-                        bound3.bottom=bounds.bottom+2;
-                        bound3.left=bounds.left+2;
-                        bound3.right=bounds.right+2;
-
-                        Rect bound4 = new Rect() ;
-                        bound4.top=bounds.top+3;
-                        bound4.bottom=bounds.bottom+3;
-                        bound4.left=bounds.left+3;
-                        bound4.right=bounds.right+3;
-
-
-                        Rect bound5 = new Rect() ;
-                        bound5.top=bounds.top+4;
-                        bound5.bottom=bounds.bottom+4;
-                        bound5.left=bounds.left+4;
-                        bound5.right=bounds.right+4;
-
-
-                        Rect bound6 = new Rect();
-                        bound6.top=bounds.top+5;
-                        bound6.bottom=bounds.bottom+5;
-                        bound6.left=bounds.left+5;
-                        bound6.right=bounds.right+5;
-*/
-
-
-                        canvas.drawRect(bounds,p);
-                     /*   canvas.drawRect(bound2,p);
-                        canvas.drawRect(bound3,p);
-                        canvas.drawRect(bound4,p);
-                        canvas.drawRect(bound5,p);
-                        canvas.drawRect(bound6,p);*/
-                        resultImg.setImageBitmap(newBitmap);
-
-
-                    }
-
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    System.out.println("beyter "+e.getMessage());
-                }
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
+    public  void  CropBitmaps(View view){
+        if(myBitmaps!=null){
+            idBitmap=(idBitmap+1)%myBitmaps.size();
+            resultImg.setImageBitmap(myBitmaps.get(idBitmap));
+            textObjectName.setText(myNames.get(idBitmap));
+        }else{
+            Toast.makeText(this, "Kırpılmış bir resim yok", Toast.LENGTH_SHORT).show();
         }
-
-
     }
-
     public void ImageClick(View view){
         if (ContextCompat.checkSelfPermission(getApplicationContext(),
                 Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -256,7 +177,10 @@ public class MainActivity extends AppCompatActivity {
                                     public void onComplete(@NonNull Task<String> task) {
                                         if (task.isSuccessful()){
                                             Picasso.get().load(task.getResult()).into(resultImg);
-                                            System.out.println("beyter 5 "+task.getResult());
+                                            progressClosed();
+                                        }else{
+                                            progressClosed();
+                                            Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
                                         }
                                     }
                                 });
@@ -268,7 +192,9 @@ public class MainActivity extends AppCompatActivity {
                                         if (task.isSuccessful()){
                                             List<Map<String,Object>> myObjects= (List<Map<String, Object>>) task.getResult().get("result");
                                             myObject(myObjects);
+                                            progressClosed();
                                         }else{
+                                            progressClosed();
                                             Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
                                         }
                                     }
@@ -278,14 +204,18 @@ public class MainActivity extends AppCompatActivity {
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                System.out.println("beyter "+e.getMessage());
+                progressClosed();
+                Toast.makeText(MainActivity.this, "Upssss.", Toast.LENGTH_SHORT).show();
             }
         });
     }
-
+    public  void progressClosed(){
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+    }
     private void myObject(List<Map<String, Object>> myObjects) {
          Bitmap bitmap = null;
-
          try {
              if (Build.VERSION.SDK_INT >= 28) {
                  ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
@@ -310,13 +240,15 @@ public class MainActivity extends AppCompatActivity {
                 if(y>bound.top) bound.top=y;//600
                 else if(y<bound.bottom || bound.bottom==0) bound.bottom=y;
              }
-            myNames.add((String) object.get("name"));
+             myNames.add((String)object.get("name") );
             if(bitmap!=null){
                 Bitmap newBitmap = Bitmap.createBitmap(bitmap,bound.left,bound.bottom,bound.right-bound.left,(bound.top-bound.bottom));
                 myBitmaps.add(newBitmap);
             }
         }
-
+        resultImg.setBackgroundColor(Color.rgb(255,255,255));
+        resultImg.setImageBitmap(myBitmaps.get(idBitmap));
+        textObjectName.setText(myNames.get(idBitmap));
     }
 
 
@@ -328,8 +260,15 @@ public class MainActivity extends AppCompatActivity {
                 .continueWith(new Continuation<HttpsCallableResult, String>() {
                     @Override
                     public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                        Map<String, Object> result = (Map<String, Object>) task.getResult().getData();
-                        return String.valueOf(result.get("result")) ;
+                        if (task.isSuccessful()){
+                            Map<String, Object> result = (Map<String, Object>) task.getResult().getData();
+
+                            textObjectName.setText("new=> "+result.get("fileSize") +" MB \n"+"old=> "+result.get("orjinalFileSize")+" MB");
+                            return String.valueOf(result.get("result")) ;
+                        }else{
+                            return null;
+                        }
+
                     }
                 });
     }
