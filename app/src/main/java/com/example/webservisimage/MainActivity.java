@@ -233,8 +233,9 @@ public class MainActivity extends AppCompatActivity {
             List<Map<String,Object>> myVertices = (List<Map<String, Object>>) myBoundingPoly.get("normalizedVertices");
             Rect bound = new Rect();
             for (Map<String,Object> vertices: myVertices){
-                int x = (int)((double)vertices.get("x")*bitmap.getWidth());
-                int y = (int)((double)vertices.get("y")*bitmap.getHeight());
+                int x=0,y=0;
+                if (vertices.get("x")!=null) x = (int)((double)vertices.get("x")*bitmap.getWidth());
+                if (vertices.get("y")!=null)  y = (int)((double)vertices.get("y")*bitmap.getHeight());
                 if(x>bound.right)bound.right=x;//450
                 else if(x<bound.left || bound.left==0) bound.left=x;//160
                 if(y>bound.top) bound.top=y;//600
@@ -296,6 +297,51 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        Bitmap bitmap = null;
+
+
+        if (resultCode == RESULT_OK ){
+            if (requestCode == 2 && data != null ) {
+                selectedImage = data.getData();
+                try {
+                    if (Build.VERSION.SDK_INT >= 28) {
+                        ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
+                        bitmap = ImageDecoder.decodeBitmap(source);
+                        img.setBackgroundColor(Color.rgb(255,255,255));
+                        img.setImageBitmap(bitmap);
+                    }
+                    else {
+                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
+                        img.setImageBitmap(bitmap);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }else if(requestCode==3){
+
+                try {
+                    if (Build.VERSION.SDK_INT >= 28) {
+                        ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
+                        bitmap = ImageDecoder.decodeBitmap(source);
+                        img.setBackgroundColor(Color.rgb(255,255,255));
+                        img.setImageBitmap(bitmap);
+
+                    }
+                    else {
+                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
+                        img.setImageBitmap(bitmap);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+
+
+
+/*
         if (resultCode == RESULT_OK ){
             if (requestCode == 2 && data != null ) {
                 selectedImage = data.getData();
@@ -304,7 +350,7 @@ public class MainActivity extends AppCompatActivity {
             }else if(requestCode==3){
                 img.setImageURI(selectedImage);
             }
-        }
+        }*/
         super.onActivityResult(requestCode, resultCode, data);
     }
 
