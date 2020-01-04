@@ -111,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void Segmantation(View view){
         if (selectedImage!=null){
-          //  segma();
              myBitmaps.clear();
              myNames.clear();
              idBitmap=0;
@@ -121,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public  void  CropBitmaps(View view){
-        if(myBitmaps!=null){
+        if(!myBitmaps.isEmpty()){
             idBitmap=(idBitmap+1)%myBitmaps.size();
             resultImg.setImageBitmap(myBitmaps.get(idBitmap));
             textObjectName.setText(myNames.get(idBitmap));
@@ -233,15 +232,21 @@ public class MainActivity extends AppCompatActivity {
             List<Map<String,Object>> myVertices = (List<Map<String, Object>>) myBoundingPoly.get("normalizedVertices");
             Rect bound = new Rect();
             for (Map<String,Object> vertices: myVertices){
-                int x=0,y=0;
-                if (vertices.get("x")!=null) x = (int)((double)vertices.get("x")*bitmap.getWidth());
-                if (vertices.get("y")!=null)  y = (int)((double)vertices.get("y")*bitmap.getHeight());
-                if(x>bound.right)bound.right=x;//450
-                else if(x<bound.left || bound.left==0) bound.left=x;//160
-                if(y>bound.top) bound.top=y;//600
+              int x=0,y=0;
+              try{
+                    if (vertices.get("x") != null) x = (int)((double)vertices.get("x")*bitmap.getWidth());
+                    if (vertices.get("y") != null) y = (int)((double)vertices.get("y")*bitmap.getHeight());
+                }catch (Exception e){
+                    if (x==0) x=bitmap.getWidth();
+                    if (y==0) y=bitmap.getHeight();
+                    System.out.println(e.getMessage());
+                }
+                if(x>bound.right) bound.right=x;
+                else if(x<bound.left || bound.left==0) bound.left=x;
+                if(y>bound.top) bound.top=y;
                 else if(y<bound.bottom || bound.bottom==0) bound.bottom=y;
              }
-             myNames.add((String)object.get("name") );
+             myNames.add((String)object.get("name"));
             if(bitmap!=null){
                 Bitmap newBitmap = Bitmap.createBitmap(bitmap,bound.left,bound.bottom,bound.right-bound.left,(bound.top-bound.bottom));
                 myBitmaps.add(newBitmap);
@@ -263,8 +268,7 @@ public class MainActivity extends AppCompatActivity {
                     public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
                         if (task.isSuccessful()){
                             Map<String, Object> result = (Map<String, Object>) task.getResult().getData();
-
-                            textObjectName.setText("new=> "+result.get("fileSize") +" MB \n"+"old=> "+result.get("orjinalFileSize")+" MB");
+                            textObjectName.setText("new=> "+result.get("fileSize") +" KB \n"+"old=> "+result.get("orjinalFileSize")+" KB");
                             return String.valueOf(result.get("result")) ;
                         }else{
                             return null;
