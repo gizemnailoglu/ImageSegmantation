@@ -111,11 +111,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void Segmantation(View view){
         if (selectedImage!=null){
-             myBitmaps.clear();
-             myNames.clear();
-             idBitmap=0;
-             progressDialog.show();
-             addFirebaseFile(selectedImage,2,0);
+            myBitmaps.clear();
+            myNames.clear();
+            idBitmap=0;
+            progressDialog.show();
+            addFirebaseFile(selectedImage,2,0);
         }else Toast.makeText(this, "Bir resim seçilmedi", Toast.LENGTH_SHORT).show();
     }
 
@@ -170,35 +170,35 @@ public class MainActivity extends AppCompatActivity {
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            if (operation==1){
-                                ImageCompress(imageName,compRate).addOnCompleteListener(new OnCompleteListener<String>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<String> task) {
-                                        if (task.isSuccessful()){
-                                            Picasso.get().load(task.getResult()).into(resultImg);
-                                            progressClosed();
-                                        }else{
-                                            progressClosed();
-                                            Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
-                                        }
+                        if (operation==1){
+                            ImageCompress(imageName,compRate).addOnCompleteListener(new OnCompleteListener<String>() {
+                                @Override
+                                public void onComplete(@NonNull Task<String> task) {
+                                    if (task.isSuccessful()){
+                                        Picasso.get().load(task.getResult()).into(resultImg);
+                                        progressClosed();
+                                    }else{
+                                        progressClosed();
+                                        Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
                                     }
-                                });
-                            }
-                            else if (operation==2){
-                                ImageSegmantation(imageName,String.valueOf(imageName)).addOnCompleteListener(new OnCompleteListener<Map<String, Object>>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Map<String, Object>> task) {
-                                        if (task.isSuccessful()){
-                                            List<Map<String,Object>> myObjects= (List<Map<String, Object>>) task.getResult().get("result");
-                                            myObject(myObjects);
-                                            progressClosed();
-                                        }else{
-                                            progressClosed();
-                                            Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
-                                        }
+                                }
+                            });
+                        }
+                        else if (operation==2){
+                            ImageSegmantation(imageName,String.valueOf(imageName)).addOnCompleteListener(new OnCompleteListener<Map<String, Object>>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Map<String, Object>> task) {
+                                    if (task.isSuccessful()){
+                                        List<Map<String,Object>> myObjects= (List<Map<String, Object>>) task.getResult().get("result");
+                                        myObject(myObjects);
+                                        progressClosed();
+                                    }else{
+                                        progressClosed();
+                                        Toast.makeText(MainActivity.this, "Upsss....", Toast.LENGTH_SHORT).show();
                                     }
-                                });
-                            }
+                                }
+                            });
+                        }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -214,26 +214,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void myObject(List<Map<String, Object>> myObjects) {
-         Bitmap bitmap = null;
-         try {
-             if (Build.VERSION.SDK_INT >= 28) {
-                 ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
-                 bitmap = ImageDecoder.decodeBitmap(source);
-             } else {
-                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
-             }
+        Bitmap bitmap = null;
+        try {
+            if (Build.VERSION.SDK_INT >= 28) {
+                ImageDecoder.Source source = ImageDecoder.createSource(this.getContentResolver(),selectedImage);
+                bitmap = ImageDecoder.decodeBitmap(source);
+            } else {
+                bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),selectedImage);
+            }
 
-         } catch (IOException e) {
-             e.printStackTrace();
-         }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         for (Map<String,Object> object : myObjects){
             Map<String, Object> myBoundingPoly = (Map<String, Object>) object.get("boundingPoly");
             List<Map<String,Object>> myVertices = (List<Map<String, Object>>) myBoundingPoly.get("normalizedVertices");
             Rect bound = new Rect();
             for (Map<String,Object> vertices: myVertices){
-              int x=0,y=0;
-              try{
+                int x=0,y=0;
+                try{
                     if (vertices.get("x") != null) x = (int)((double)vertices.get("x")*bitmap.getWidth());
                     if (vertices.get("y") != null) y = (int)((double)vertices.get("y")*bitmap.getHeight());
                 }catch (Exception e){
@@ -245,8 +245,8 @@ public class MainActivity extends AppCompatActivity {
                 else if(x<bound.left || bound.left==0) bound.left=x;
                 if(y>bound.top) bound.top=y;
                 else if(y<bound.bottom || bound.bottom==0) bound.bottom=y;
-             }
-             myNames.add((String)object.get("name"));
+            }
+            myNames.add((String)object.get("name"));
             if(bitmap!=null){
                 Bitmap newBitmap = Bitmap.createBitmap(bitmap,bound.left,bound.bottom,bound.right-bound.left,(bound.top-bound.bottom));
                 myBitmaps.add(newBitmap);
@@ -284,12 +284,12 @@ public class MainActivity extends AppCompatActivity {
         data.put("path_name",pathName);
         return mFunctions .getHttpsCallable("ImageSegmantation").call(data)
                 .continueWith(new Continuation<HttpsCallableResult, Map<String, Object>>() {
-            @Override
-            public Map<String, Object> then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                Map<String, Object> result = (Map<String, Object>) task.getResult().getData();
-                return result ;
-            }
-        });
+                    @Override
+                    public Map<String, Object> then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        Map<String, Object> result = (Map<String, Object>) task.getResult().getData();
+                        return result ;
+                    }
+                });
     }
 
     @Override
